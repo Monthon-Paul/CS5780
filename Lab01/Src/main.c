@@ -75,13 +75,13 @@ int main(void) {
     RCC->AHBENR |= RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIOAEN;
 
     // Mode for PC6-PC9 and PA0
-    GPIOC->MODER |= (1 << 12) | (1 << 14); // set PC6 & PC7 (RED/BLUE) to high
-    GPIOC->MODER &= ~((1<<13) | (1<<15)); // set to bits to low
-    GPIOC->OTYPER &= ~((1<<15) | (1<<14) | (1<<13) | (1<<12));  // set Output push-pull to 00
-	GPIOC->OSPEEDR &= ~((1<<14) | (1<<12));                     // set Low Speed to x0
-	GPIOC->PUPDR &= ~((1<<15) | (1<<14) | (1<<13) | (1<<12));   // set no Pull-Down Resistor & no Pull-Up Resistor
-    GPIOA->OSPEEDR = 0x0;                                       // set Low Speed x0
-    GPIOA->OSPEEDR |= (1 << 1);                                 // set Pull-Down Resistor 
+    GPIOC->MODER |= (1 << 12) | (1 << 14);                             // set PC6 & PC7 (RED/BLUE) to high
+    GPIOC->MODER &= ~((1 << 13) | (1 << 15));                          // set to bits to low
+    GPIOC->OTYPER &= ~((1 << 6) | (1 << 7));                           // set Output push-pull to 00
+    GPIOC->OSPEEDR &= ~((1 << 14) | (1 << 12));                        // set Low Speed to x0
+    GPIOC->PUPDR &= ~((1 << 15) | (1 << 14) | (1 << 13) | (1 << 12));  // set no Pull-Down Resistor & no Pull-Up Resistor
+    GPIOA->OSPEEDR = 0x0;                                              // set Low Speed x0
+    GPIOA->OSPEEDR |= (1 << 1);                                        // set Pull-Down Resistor
 
     uint32_t debouncer = 0;
 
