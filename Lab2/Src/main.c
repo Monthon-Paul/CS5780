@@ -56,13 +56,14 @@ void _Error_Handler(char* file, int line);
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 void EXTI0_1_IRQHandler() {
-    if (EXTI->PR & EXTI_PR_PR0) {
-        EXTI->PR |= EXTI_PR_PR0;
+    EXTI->PR |= EXTI_PR_PR0;
 
-        GPIOC->ODR ^= ((1 << 8) | (1 << 9));
-    }
+    GPIOC->ODR ^= ((1 << 8) | (1 << 9));
     for (volatile int i = 0; i < 1500000; i++)
         ;
+    EXTI->PR |= EXTI_PR_PR0;
+
+    GPIOC->ODR ^= ((1 << 8) | (1 << 9));
 }
 /* USER CODE END PV */
 
@@ -84,7 +85,7 @@ int main(void) {
     RCC->AHBENR |= RCC_AHBENR_GPIOCEN | RCC_AHBENR_GPIOAEN | RCC_APB2ENR_SYSCFGCOMPEN;
 
     // Mode for PC6-PC9 and PA0
-    GPIOC->MODER |= (1 << 12) | (1 << 14) | (1 << 16) | (1 << 18);     // set PC6-PC9 (RED/BLUE) to high
+    GPIOC->MODER |= (1 << 12) | (1 << 14) | (1 << 16) | (1 << 18);     // set all PC6-PC9 to high
     GPIOC->MODER &= ~((1 << 13) | (1 << 15) | (1 << 17) | (1 << 19));  // set to bits to low
 
     // Type for PC6-PC9
@@ -102,12 +103,11 @@ int main(void) {
     EXTI->IMR |= (1 << 0);
     EXTI->RTSR |= (1 << 0);
 
-    SYSCFG->EXTICR[0] &= ~SYSCFG_EXTICR1_EXTI0_PA;
+    SYSCFG->EXTICR[1] &= ~SYSCFG_EXTICR1_EXTI0_PA;
 
     NVIC_EnableIRQ(EXTI0_1_IRQn);
-    NVIC_SetPriority(EXTI0_1_IRQn, 1);
-
-    uint32_t debouncer = 0;
+    NVIC_SetPriority(EXTI0_1_IRQn, 3);
+    NVIC_SetPriority(SysTick_IRQn, 2);
 
     while (1) {
         GPIOC->ODR ^= (1 << 6);  // Set ODR high for PC6 = RED

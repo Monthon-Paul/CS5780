@@ -120,16 +120,16 @@ void PendSV_Handler(void) {
  */
 void SysTick_Handler(void) {
     /* USER CODE BEGIN SysTick_IRQn 0 */
-
-    /* USER CODE END SysTick_IRQn 0 */
-    HAL_IncTick();
-    /* USER CODE BEGIN SysTick_IRQn 1 */
     static int i;
     i++;
     if (i == 200) {
       GPIOC->ODR ^= (1 << 7);
       i = 0;
     }
+    /* USER CODE END SysTick_IRQn 0 */
+    HAL_IncTick();
+    /* USER CODE BEGIN SysTick_IRQn 1 */
+    
     /* USER CODE END SysTick_IRQn 1 */
 }
 
