@@ -75,15 +75,22 @@ void SystemClock_Config(void);
 /* USER CODE END 0 */
 
 int main(void) {
+    HAL_Init();
     SystemClock_Config();
 
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
-    // TIM2->ARR = 250;
-    // TIM2->PSC = 7999;
-    // TIM2->DIER |= 0x1;
-    // TIM2->CR1 |= TIM_CR1_CEN;
-    // NVIC_EnableIRQ(TIM2_IRQn);
+    // Initialize Clock
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_TIM2_CLK_ENABLE();
+    __HAL_RCC_TIM3_CLK_ENABLE();
+
+    /* 3.1 section */
+    TIM2->ARR = 250;
+    TIM2->PSC = 7999;
+    TIM2->DIER |= 0x1;
+    TIM2->CR1 |= TIM_CR1_CEN;
+    NVIC_EnableIRQ(TIM2_IRQn);
+
+    /* 3.2 section */
     TIM3->ARR = 125;
     TIM3->PSC = 79;
     TIM3->CCMR1 &= ~(TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC1S_1);
@@ -93,25 +100,33 @@ int main(void) {
     TIM3->CCMR1 &= ~(TIM_CCMR1_OC2M_0);
     TIM3->CCMR1 |= TIM_CCMR1_OC1PE;
     TIM3->CCMR1 |= TIM_CCMR1_OC2PE;
+    TIM3->CR1 |= TIM_CR1_CEN;
 
     TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
-    TIM3->CCR1 != 25;
-    TIM3->CCR2 != 25;
+    TIM3->CCR1 = 25;
+    TIM3->CCR2 = 25;
 
-    // Enable LEDS
+    /* 3.3 section */
+    // Initialize LEDS pins PC6/PC7
+    GPIO_InitTypeDef initStr = {GPIO_PIN_6 | GPIO_PIN_7,
+                                GPIO_MODE_AF_PP,
+                                GPIO_SPEED_FREQ_LOW,
+                                GPIO_NOPULL};
+    HAL_GPIO_Init(GPIOC, &initStr);
+
+    // Enable LEDS for PC8/PC9
     GPIOC->MODER |= GPIO_MODER_MODER9_0 | GPIO_MODER_MODER8_0;
     GPIOC->MODER &= ~(GPIO_MODER_MODER9_1 | GPIO_MODER_MODER8_1);
 
     GPIOC->OTYPER &= ~(GPIO_OTYPER_OT_8 | GPIO_OTYPER_OT_9);
 
-    GPIOC->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR8_0 | GPIO_OSPEEDER_OSPEEDR9_0);
+    GPIOC->OSPEEDR = GPIO_SPEED_FREQ_LOW;
 
-    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPDR8 | GPIO_PUPDR_PUPDR9);
+    GPIOC->PUPDR = GPIO_NOPULL;
     GPIOC->ODR = GPIO_ODR_9;
 
-    // while (1) {
-    //
-    // }
+    while (1) {
+    }
 }
 
 /** System Clock Configuration
