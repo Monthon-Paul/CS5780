@@ -75,7 +75,6 @@ void SystemClock_Config(void);
 /* USER CODE END 0 */
 
 int main(void) {
-    HAL_Init();
     SystemClock_Config();
 
     // Initialize Clock
@@ -93,32 +92,35 @@ int main(void) {
     /* 3.2 section */
     TIM3->ARR = 125;
     TIM3->PSC = 79;
+    // Set CC1S to 00 as CC1 channel is configured as output
     TIM3->CCMR1 &= ~(TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC1S_1);
+    // Set CC2S to 00 as CC2 channel is configured as output
     TIM3->CCMR1 &= ~(TIM_CCMR1_CC2S_0 | TIM_CCMR1_CC2S_1);
+    // set output channel 1 to PWM Mode 2 -> 111
     TIM3->CCMR1 |= TIM_CCMR1_OC1M_0 | TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2;
+
+    // set output channel 2 to PWM Mode 1 -> 110
     TIM3->CCMR1 |= TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2;
     TIM3->CCMR1 &= ~(TIM_CCMR1_OC2M_0);
+
+    // Enable the output compare preload for both channels
     TIM3->CCMR1 |= TIM_CCMR1_OC1PE;
     TIM3->CCMR1 |= TIM_CCMR1_OC2PE;
-    TIM3->CR1 |= TIM_CR1_CEN;
-
+    
+    // Set the output enable bits for channels 1 & 2 in the CCER register.
     TIM3->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
-    TIM3->CCR1 = 25;
-    TIM3->CCR2 = 25;
+    TIM3->CR1 |= TIM_CR1_CEN;
+    TIM3->CCR1 = 25;  // 125 * 20%
+    TIM3->CCR2 = 25;  // 125 * 20%
 
     /* 3.3 section */
-    // Initialize LEDS pins PC6/PC7
-    GPIO_InitTypeDef initStr = {GPIO_PIN_6 | GPIO_PIN_7,
-                                GPIO_MODE_AF_PP,
-                                GPIO_SPEED_FREQ_LOW,
-                                GPIO_NOPULL};
-    HAL_GPIO_Init(GPIOC, &initStr);
+    // Enable LEDS pins for PC6 - PC9 
+    GPIOC->MODER |= GPIO_MODER_MODER9_0 | GPIO_MODER_MODER8_0 | GPIO_MODER_MODER6_1 | GPIO_MODER_MODER7_1;
+    GPIOC->MODER &= ~(GPIO_MODER_MODER9_1 | GPIO_MODER_MODER8_1 | GPIO_MODER_MODER6_0 | GPIO_MODER_MODER7_0);
+    GPIOC->AFR[0] = GPIO_AFRL_AFRL0;
+    GPIOC->AFR[1] = GPIO_AFRH_AFRH0;
 
-    // Enable LEDS for PC8/PC9
-    GPIOC->MODER |= GPIO_MODER_MODER9_0 | GPIO_MODER_MODER8_0;
-    GPIOC->MODER &= ~(GPIO_MODER_MODER9_1 | GPIO_MODER_MODER8_1);
-
-    GPIOC->OTYPER &= ~(GPIO_OTYPER_OT_8 | GPIO_OTYPER_OT_9);
+    GPIOC->OTYPER &= ~(GPIO_OTYPER_OT_8 | GPIO_OTYPER_OT_9 | GPIO_OTYPER_OT_6 | GPIO_OTYPER_OT_7);
 
     GPIOC->OSPEEDR = GPIO_SPEED_FREQ_LOW;
 
