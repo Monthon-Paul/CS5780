@@ -55,6 +55,8 @@ void _Error_Handler(char* file, int line);
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+int start = 1;
+char* error = "Error";
 
 /* USER CODE END PV */
 
@@ -66,12 +68,56 @@ void SystemClock_Config(void);
 
 /* USER CODE END PFP */
 
+void transmit_char(char c) {
+    while (USART3->ISR != USART_ISR_TXE)
+        ;
+    USART3->TDR = c;
+}
+
+void transmit_string(char* s) {
+    for (int i = 0; s[i] != '\0'; i++) {
+        transmit_char(s[i]);
+    }
+}
+
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
 int main(void) {
-    
+    HAL_Init();
+    SystemClock_Config();
+
+    // Initialize Clock
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    RCC->APB1ENR = RCC_APB1ENR_USART3EN;
+
+    // Initialize LED pins
+    GPIO_InitTypeDef initStr = {GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_6 | GPIO_PIN_7,
+                                GPIO_MODE_OUTPUT_PP,
+                                GPIO_SPEED_FREQ_LOW,
+                                GPIO_NOPULL};
+    HAL_GPIO_Init(GPIOC, &initStr);  // Initialize LED pins
+
+    /* 4.1 section */
+    GPIO_InitTypeDef initStr2 = {GPIO_PIN_10 | GPIO_PIN_11,
+                                 GPIO_MODE_AF_PP,
+                                 GPIO_SPEED_FREQ_LOW,
+                                 GPIO_NOPULL};
+    HAL_GPIO_Init(GPIOB, &initStr2);
+
+    GPIOB->AFR[1] |= (4 << 8) | (4 << 12);
+
+    USART3->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
+    USART3->BRR = 69;  // HAL_RCC_GetHCLKFreq() / target_Baud;
+
+    while (1) {
+        if (start) {
+            transmit_string("CMD?");
+            start = 0;
+        }
+    }
 }
 
 /** System Clock Configuration
