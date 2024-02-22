@@ -45,7 +45,7 @@
 
 #include "stm32f072xb.h"
 #include "stm32f0xx_hal.h"
-void _Error_Handler(char* file, int line);
+void _Error_Handler(char *file, int line);
 
 /* USER CODE BEGIN Includes */
 
@@ -55,8 +55,8 @@ void _Error_Handler(char* file, int line);
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-int start = 1;
-char* error = "Error";
+int print = 1;
+char *error = "Error";
 
 /* USER CODE END PV */
 
@@ -69,15 +69,14 @@ void SystemClock_Config(void);
 /* USER CODE END PFP */
 
 void transmit_char(char c) {
-    while (USART3->ISR != USART_ISR_TXE)
-        ;
+    while (!(USART3->ISR & USART_ISR_TXE)) {
+    }
     USART3->TDR = c;
 }
 
-void transmit_string(char* s) {
-    for (int i = 0; s[i] != '\0'; i++) {
+void transmit_string(char *s) {
+    for (int i = 0; s[i] != '\0'; i++)
         transmit_char(s[i]);
-    }
 }
 
 /* USER CODE BEGIN 0 */
@@ -109,14 +108,11 @@ int main(void) {
 
     GPIOB->AFR[1] |= (4 << 8) | (4 << 12);
 
-    USART3->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
-    USART3->BRR = 69;  // HAL_RCC_GetHCLKFreq() / target_Baud;
+    USART3->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
+    USART3->BRR = 69;  // HAL_RCC_GetHCLKFreq() / 115200 ~= 70 or 69
 
     while (1) {
-        if (start) {
-            transmit_string("CMD?");
-            start = 0;
-        }
+        transmit_string("Hello");
     }
 }
 
@@ -168,7 +164,7 @@ void SystemClock_Config(void) {
  * @param  None
  * @retval None
  */
-void _Error_Handler(char* file, int line) {
+void _Error_Handler(char *file, int line) {
     /* USER CODE BEGIN Error_Handler_Debug */
     /* User can add his own implementation to report the HAL error return state */
     while (1) {
@@ -185,7 +181,7 @@ void _Error_Handler(char* file, int line) {
  * @param line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t *file, uint32_t line) {
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
       ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
