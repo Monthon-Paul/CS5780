@@ -88,7 +88,8 @@ void transmit_string(char *s) {
 }
 
 /**
- * @brief Toggle LEDS from given r,g,b,o characters
+ * @brief Toggle LEDS from given r,g,b,o characters 
+ *        4.1 section checkoff
 */
 void recieve_LED() {
     if (USART3->ISR & USART_CR1_RXNEIE) {
@@ -110,6 +111,59 @@ void recieve_LED() {
         if (color != 'r' && color != 'b' && color != 'g' && color != 'o')
             transmit_string("Error");
     }
+}
+
+/**
+ * @brief Toggle LEDS from given r,g,b,o characters with extra modes
+ *        4.2 section checkoff
+*/
+void USART3_4_IRQHandler() {
+    if (!flag) {
+        color = USART3->RDR;
+        flag = 1;
+    } else {
+        switch (color) {
+            case 'r':
+                mode = USART3->RDR;
+                if (mode == '0')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
+                else if (mode == '1')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+                else if (mode == '2')
+                    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
+                break;
+            case 'b':
+                mode = USART3->RDR;
+                if (mode == '0')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+                else if (mode == '1')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+                else if (mode == '2')
+                    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
+                break;
+            case 'o':
+                mode = USART3->RDR;
+                if (mode == '0')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+                else if (mode == '1')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+                else if (mode == '2')
+                    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+                break;
+            case 'g':
+                mode = USART3->RDR;
+                if (mode == '0')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+                else if (mode == '1')
+                    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
+                else if (mode == '2')
+                    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_9);
+                break;
+        }
+        flag = 0;
+    }
+    if (color != 'r' && color != 'b' && color != 'g' && color != 'o')
+        transmit_string("Error");
 }
 /* USER CODE BEGIN 0 */
 
@@ -143,8 +197,12 @@ int main(void) {
     USART3->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
     USART3->BRR = 69;  // HAL_RCC_GetHCLKFreq() / 115200 ~= 70 or 69
 
+    NVIC_EnableIRQ(USART3_4_IRQn);
+
     while (1) {
-        recieve_LED();
+        HAL_Delay(1000);
+        transmit_string("CMD?");
+        //recieve_LED();
     }
 }
 
