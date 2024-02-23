@@ -55,8 +55,8 @@ void _Error_Handler(char *file, int line);
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-int print = 1;
-char *error = "Error";
+int flag;
+char color, mode;
 
 /* USER CODE END PV */
 
@@ -68,17 +68,49 @@ void SystemClock_Config(void);
 
 /* USER CODE END PFP */
 
+/**
+ * @brief Read a character to Transmit Data Register
+ * @param c character it reads
+*/
 void transmit_char(char c) {
     while (!(USART3->ISR & USART_ISR_TXE)) {
     }
     USART3->TDR = c;
 }
 
+/**
+ * @brief Read a string to Transmit Data Register
+ * @param s a C string
+*/
 void transmit_string(char *s) {
     for (int i = 0; s[i] != '\0'; i++)
         transmit_char(s[i]);
 }
 
+/**
+ * @brief Toggle LEDS from given r,g,b,o characters
+*/
+void recieve_LED() {
+    if (USART3->ISR & USART_CR1_RXNEIE) {
+        color = USART3->RDR;
+        switch (color) {
+            case 'r':
+                HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
+                break;
+            case 'b':
+                HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
+                break;
+            case 'o':
+                HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8);
+                break;
+            case 'g':
+                HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_9);
+                break;
+        }
+        if (color != 'r' && color != 'b' && color != 'g' && color != 'o')
+            transmit_string("Error");
+    }
+}
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -108,11 +140,11 @@ int main(void) {
 
     GPIOB->AFR[1] |= (4 << 8) | (4 << 12);
 
-    USART3->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
+    USART3->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
     USART3->BRR = 69;  // HAL_RCC_GetHCLKFreq() / 115200 ~= 70 or 69
 
     while (1) {
-        transmit_string("Hello");
+        recieve_LED();
     }
 }
 
