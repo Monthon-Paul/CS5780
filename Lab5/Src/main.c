@@ -73,7 +73,7 @@ void SystemClock_Config(void);
 int main(void) {
     /**
      * Part 1 of the Lab5
-    */
+     */
     HAL_Init();
     SystemClock_Config();
 
@@ -146,8 +146,8 @@ int main(void) {
     // write who_am_I reg into I2C transmit register
     I2C2->TXDR |= 0x0F;
 
-    while (!(I2C2->ISR & I2C_ISR_TC)) { /*loop waiting for TC*/
-    };
+    while (!(I2C2->ISR & I2C_ISR_TC))
+        ; /* loop waiting for TC */
 
     // Reload the CR2 register
     // setting SADD & NBYTES
@@ -160,12 +160,12 @@ int main(void) {
     I2C2->CR2 |= I2C_CR2_START;
 
     // wait until RXNE or NACKF flags are set
-    while (!(I2C2->ISR & I2C_ISR_RXNE)) {
-    };
+    while (!(I2C2->ISR & I2C_ISR_RXNE))
+        ;
     if (I2C2->ISR & I2C_ISR_NACKF)
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-    while (!(I2C2->ISR & I2C_ISR_TC)) { /*loop waiting for TC*/
-    };
+    while (!(I2C2->ISR & I2C_ISR_TC))
+        ; /* loop waiting for TC */
 
     // Check the contents of the RXDR register to see if it matches the correct value of WHO_AM_I register
     if (I2C2->RXDR == 0xD3)
