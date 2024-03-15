@@ -96,7 +96,7 @@ int main(void) {
     GPIOB->OTYPER |= GPIO_OTYPER_OT_13;
 
     GPIOB->AFR[1] |= (1 << 12);
-    GPIOB->AFR[1] |= (6 << 24);
+    GPIOB->AFR[1] |= (5 << 20);
 
     // Setting up PB14
     GPIOB->MODER |= GPIO_MODER_MODER14_0;
@@ -145,10 +145,9 @@ int main(void) {
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
     // write who_am_I reg into I2C transmit register
     I2C2->TXDR |= 0x0F;
-
     while (!(I2C2->ISR & I2C_ISR_TC))
         ; /* loop waiting for TC */
-
+        
     // Reload the CR2 register
     // setting SADD & NBYTES
     I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
