@@ -71,12 +71,108 @@ void SystemClock_Config(void);
 /* USER CODE END 0 */
 
 int main(void) {
+    /**
+     * Part 1 of the Lab5
+    */
+    HAL_Init();
     SystemClock_Config();
 
-    HAL_Init();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    RCC->APB1ENR |= RCC_APB1ENR_I2C2EN;
 
-    while (1) {
-    }
+    // Initialize LED pins
+    GPIO_InitTypeDef initStr = {GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_6 | GPIO_PIN_7,
+                                GPIO_MODE_OUTPUT_PP,
+                                GPIO_SPEED_FREQ_LOW,
+                                GPIO_NOPULL};
+    HAL_GPIO_Init(GPIOC, &initStr);  // Initialize LED pins
+
+    // Setting up PB11 and PB13
+    GPIOB->MODER &= ~(GPIO_MODER_MODER11_0 | GPIO_MODER_MODER13_0);
+    GPIOB->MODER |= (GPIO_MODER_MODER11_1 | GPIO_MODER_MODER13_1);
+
+    GPIOB->OTYPER |= GPIO_OTYPER_OT_11;
+    GPIOB->OTYPER |= GPIO_OTYPER_OT_13;
+
+    GPIOB->AFR[1] |= (1 << 12);
+    GPIOB->AFR[1] |= (6 << 24);
+
+    // Setting up PB14
+    GPIOB->MODER |= GPIO_MODER_MODER14_0;
+    GPIOB->MODER &= ~(GPIO_MODER_MODER14_1);
+
+    GPIOB->OTYPER &= ~(GPIO_OTYPER_OT_14);
+
+    GPIOB->ODR |= GPIO_ODR_14;
+
+    // Setting up PC0
+    GPIOC->MODER |= GPIO_MODER_MODER0_0;
+    GPIOC->MODER &= ~(GPIO_MODER_MODER0_1);
+
+    GPIOB->OTYPER &= ~(GPIO_OTYPER_OT_0);
+
+    GPIOC->ODR |= GPIO_ODR_0;
+
+    // Leave PB15 on input mode
+    GPIOB->MODER &= ~(GPIO_MODER_MODER15_0 | GPIO_MODER_MODER15_1);
+
+    // Setting up I2C2
+    I2C2->TIMINGR |= (1 << 28) | 0x13 | (0xF << 8) | (0x2 << 15) | (0x4 << 20);
+
+    I2C2->CR1 |= I2C_CR1_PE;
+
+    /* Clear the NBYTES and SADD bit fields
+     * The NBYTES field begins at bit 16, the SADD at bit 0
+     */
+    I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+    /* Set NBYTES = 1 and SADD = 0x69
+     * Can use hex or decimal values directly as bitmasks.
+     * Remember that for 7-bit addresses, the lowest SADD bit
+     * is not used and the mask must be shifted by one.
+     */
+    I2C2->CR2 |= (1 << 16) | (0x69 << 1);
+
+    // RD_WRN to write
+    I2C2->CR2 &= ~(I2C_CR2_RD_WRN);
+    // Start
+    I2C2->CR2 |= I2C_CR2_START;
+
+    // wait until TXIS or NACKF flags are set
+    while (!(I2C2->ISR & I2C_ISR_TXIS))
+        ;
+    if (I2C2->ISR & I2C_ISR_NACKF)
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+    // write who_am_I reg into I2C transmit register
+    I2C2->TXDR |= 0x0F;
+
+    while (!(I2C2->ISR & I2C_ISR_TC)) { /*loop waiting for TC*/
+    };
+
+    // Reload the CR2 register
+    // setting SADD & NBYTES
+    I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+    I2C2->CR2 |= (1 << 16) | (0x69 << 1);
+
+    // reset RD_WRN to read
+    I2C2->CR2 |= I2C_CR2_RD_WRN;
+    // reset start bit
+    I2C2->CR2 |= I2C_CR2_START;
+
+    // wait until RXNE or NACKF flags are set
+    while (!(I2C2->ISR & I2C_ISR_RXNE)) {
+    };
+    if (I2C2->ISR & I2C_ISR_NACKF)
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+    while (!(I2C2->ISR & I2C_ISR_TC)) { /*loop waiting for TC*/
+    };
+
+    // Check the contents of the RXDR register to see if it matches the correct value of WHO_AM_I register
+    if (I2C2->RXDR == 0xD3)
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+    // stop
+    I2C2->CR2 |= I2C_CR2_STOP;
+    // End of Part 1 Checkoff
 }
 
 /** System Clock Configuration
