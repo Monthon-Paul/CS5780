@@ -118,7 +118,7 @@ int main(void) {
     GPIOB->MODER &= ~(GPIO_MODER_MODER15_0 | GPIO_MODER_MODER15_1);
 
     // Setting up I2C2
-    I2C2->TIMINGR |= (1 << 28) | 0x13 | (0xF << 8) | (0x2 << 15) | (0x4 << 20);
+    I2C2->TIMINGR |= (1 << 28) | 0x13 | (0xF << 8) | (0x2 << 16) | (0x4 << 20);
 
     I2C2->CR1 |= I2C_CR1_PE;
 
@@ -147,7 +147,6 @@ int main(void) {
     I2C2->TXDR |= 0x0F;
     while (!(I2C2->ISR & I2C_ISR_TC))
         ; /* loop waiting for TC */
-        
     // Reload the CR2 register
     // setting SADD & NBYTES
     I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
