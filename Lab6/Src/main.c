@@ -88,6 +88,7 @@ int main(void) {
     SystemClock_Config();
 
     __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_ADC1_CLK_ENABLE();
 
     // Initialize LED pins
     GPIO_InitTypeDef initStr = {GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_6 | GPIO_PIN_7,
@@ -96,7 +97,67 @@ int main(void) {
                                 GPIO_NOPULL};
     HAL_GPIO_Init(GPIOC, &initStr);  // Initialize LED pins
 
+    GPIOC->MODER |= GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0;
+    GPIOC->PUPDR &= ~(GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0);
+    ADC1->CFGR1 |= ADC_CFGR1_RES_1;
+    ADC1->CFGR1 &= ~(ADC_CFGR1_RES_0);
+    ADC1->CFGR1 |= ADC_CFGR1_CONT;
+    ADC1->CFGR1 &= ~(ADC_CFGR1_EXTEN_0 | ADC_CFGR1_EXTEN_1);
+
+    ADC1->ISR |= ADC_ISR_ADRDY;
+    ADC1->CR |= ADC_CR_ADEN;
+
+    while (ADC1->ISR & ADC_ISR_ADRDY)
+        ;
+    ADC1->CR |= ADC_CR_ADEN;
+
+    /* (1) Ensure that ADEN = 0 */
+    /* (2) Clear ADEN by setting ADDIS*/
+    /* (3) Clear DMAEN */
+    /* (4) Launch the calibration by setting ADCAL */
+    /* (5) Wait until ADCAL=0 */
+    if ((ADC1->CR & ADC_CR_ADEN) != 0) /* (1) */
+        ADC1->CR |= ADC_CR_ADDIS;      /* (2) */
+    while ((ADC1->CR & ADC_CR_ADEN) != 0)
+        ;
+    ADC1->CFGR1 &= ~ADC_CFGR1_DMAEN; /* (3) */
+    ADC1->CR |= ADC_CR_ADCAL;        /* (4) */
+    while ((ADC1->CR & ADC_CR_ADCAL) != 0)
+        ; /* (5) */
+
+    // ADC1->CR |= ADC_CR_ADEN;
+    ADC1->CR |= ADC_CR_ADDIS;
+
+    ADC1->CR = ADC_CR_ADSTART;
+    int thres = 0;
+    int thres1 = 64;
+    int thres2 = 128;
+    int thres3 = 256;
+
     while (1) {
+        while (!(ADC1->ISR & ADC_ISR_EOC)) {
+            if (ADC1->DR > thres && ADC1->DR < thres1) {
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+            } else if (ADC1->DR > thres1 && ADC1->DR < thres2) {
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+            } else if (ADC1->DR > thres2 && ADC1->DR < thres3) {
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+            } else {
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
+            }
+        }
     }
 }
 

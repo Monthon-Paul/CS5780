@@ -207,7 +207,7 @@ int main(void) {
 
         /* y Axis Read & Write */
         y_data = ReadY();
-        int max = 0x1FF;
+        int max = 0;
 
         /* turning LEDs on*/
         if (abs(x_data) > abs(y_data)) {
