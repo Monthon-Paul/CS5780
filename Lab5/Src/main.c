@@ -126,46 +126,46 @@ int main(void) {
     I2C2->CR1 |= I2C_CR1_PE;
 
     // Following transmit I2C protocol beginning flowchart
-    // I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
-    // I2C2->CR2 |= (1 << 16) | (0x69 << 1);
+    I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+    I2C2->CR2 |= (1 << 16) | (0x69 << 1);
 
-    // // RD_WRN to write
-    // I2C2->CR2 &= ~(I2C_CR2_RD_WRN);
-    // // Start
-    // I2C2->CR2 |= I2C_CR2_START;
+    // RD_WRN to write
+    I2C2->CR2 &= ~(I2C_CR2_RD_WRN);
+    // Start
+    I2C2->CR2 |= I2C_CR2_START;
 
-    // // wait until TXIS or NACKF flags are set
-    // while (!(I2C2->ISR & I2C_ISR_TXIS))
-    //     ;
-    // if (I2C2->ISR & I2C_ISR_NACKF)
-    //     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);  // Error State
-    // // write who_am_I reg into I2C transmit register
-    // I2C2->TXDR |= 0x0F;
-    // while (!(I2C2->ISR & I2C_ISR_TC))
-    //     ; /* loop waiting for TC */
-    // // Reload the CR2 register
-    // // setting SADD & NBYTES
-    // I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
-    // I2C2->CR2 |= (1 << 16) | (0x69 << 1);
+    // wait until TXIS or NACKF flags are set
+    while (!(I2C2->ISR & I2C_ISR_TXIS))
+        ;
+    if (I2C2->ISR & I2C_ISR_NACKF)
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);  // Error State
+    // write who_am_I reg into I2C transmit register
+    I2C2->TXDR |= 0x0F;
+    while (!(I2C2->ISR & I2C_ISR_TC))
+        ; /* loop waiting for TC */
+    // Reload the CR2 register
+    // setting SADD & NBYTES
+    I2C2->CR2 &= ~((0x7F << 16) | (0x3FF << 0));
+    I2C2->CR2 |= (1 << 16) | (0x69 << 1);
 
-    // // reset RD_WRN to read
-    // I2C2->CR2 |= I2C_CR2_RD_WRN;
-    // // reset start bit
-    // I2C2->CR2 |= I2C_CR2_START;
+    // reset RD_WRN to read
+    I2C2->CR2 |= I2C_CR2_RD_WRN;
+    // reset start bit
+    I2C2->CR2 |= I2C_CR2_START;
 
-    // // wait until RXNE or NACKF flags are set
-    // while (!(I2C2->ISR & I2C_ISR_RXNE))
-    //     ;
-    // if (I2C2->ISR & I2C_ISR_NACKF)
-    //     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);  // Error State
-    // while (!(I2C2->ISR & I2C_ISR_TC))
-    //     ; /* loop waiting for TC */
+    // wait until RXNE or NACKF flags are set
+    while (!(I2C2->ISR & I2C_ISR_RXNE))
+        ;
+    if (I2C2->ISR & I2C_ISR_NACKF)
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);  // Error State
+    while (!(I2C2->ISR & I2C_ISR_TC))
+        ; /* loop waiting for TC */
 
-    // // Check the contents of the RXDR register to see if it matches the correct value of WHO_AM_I register
-    // if (I2C2->RXDR == 0xD3)
-    //     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-    // // stop
-    // I2C2->CR2 |= I2C_CR2_STOP;
+    // Check the contents of the RXDR register to see if it matches the correct value of WHO_AM_I register
+    if (I2C2->RXDR == 0xD3)
+        HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+    // stop
+    I2C2->CR2 |= I2C_CR2_STOP;
     // End of Part 1 Checkoff
 
     /**
