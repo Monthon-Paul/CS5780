@@ -96,20 +96,20 @@ int main(void) {
                                 GPIO_SPEED_FREQ_LOW,
                                 GPIO_NOPULL};
     HAL_GPIO_Init(GPIOC, &initStr);  // Initialize LED pins
-
-    GPIOC->MODER |= GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0;
-    GPIOC->PUPDR &= ~(GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0);
+    /**
+     * Part 1: Measuring a Potentiometer With the ADC.
+    */
+    GPIOC->MODER |= GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0;     // Analog mode
+    GPIOC->PUPDR &= ~(GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0);  // no pull-up/down resistor
+    // set to 8-bit resolution
     ADC1->CFGR1 |= ADC_CFGR1_RES_1;
     ADC1->CFGR1 &= ~(ADC_CFGR1_RES_0);
+    // set Continuous conversion mode
     ADC1->CFGR1 |= ADC_CFGR1_CONT;
+    // hardware triggers disabled (software trigger only)
     ADC1->CFGR1 &= ~(ADC_CFGR1_EXTEN_0 | ADC_CFGR1_EXTEN_1);
 
-    ADC1->ISR |= ADC_ISR_ADRDY;
-    ADC1->CR |= ADC_CR_ADEN;
-
-    while (ADC1->ISR & ADC_ISR_ADRDY)
-        ;
-    ADC1->CR |= ADC_CR_ADEN;
+    ADC1->CHSELR = ADC_CHSELR_CHSEL10;  // Enable ADC_IN10 -> PC0
 
     /* (1) Ensure that ADEN = 0 */
     /* (2) Clear ADEN by setting ADDIS*/
@@ -125,38 +125,42 @@ int main(void) {
     while ((ADC1->CR & ADC_CR_ADCAL) != 0)
         ; /* (5) */
 
-    // ADC1->CR |= ADC_CR_ADEN;
-    ADC1->CR |= ADC_CR_ADDIS;
-
-    ADC1->CR = ADC_CR_ADSTART;
+    ADC1->CR |= ADC_CR_ADEN;
+    // Threshold from 0-255
     int thres = 0;
     int thres1 = 64;
     int thres2 = 128;
-    int thres3 = 256;
+    int thres3 = 255;
 
     while (1) {
-        while (!(ADC1->ISR & ADC_ISR_EOC)) {
-            if (ADC1->DR > thres && ADC1->DR < thres1) {
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
-            } else if (ADC1->DR > thres1 && ADC1->DR < thres2) {
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
-            } else if (ADC1->DR > thres2 && ADC1->DR < thres3) {
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
-            } else {
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
-                HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
-            }
+        ADC1->CR = ADC_CR_ADSTART;
+        while (!(ADC1->ISR & ADC_ISR_EOC))
+            ;
+        if (ADC1->DR == thres) {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+        } else if (ADC1->DR > thres && ADC1->DR < thres1) {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+        } else if (ADC1->DR > thres1 && ADC1->DR < thres2) {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+        } else if (ADC1->DR > thres2 && ADC1->DR < thres3) {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
+        } else if (ADC1->DR == thres3) {
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
         }
     }
 }
