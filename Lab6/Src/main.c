@@ -88,7 +88,9 @@ int main(void) {
     SystemClock_Config();
 
     __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE();
+    RCC->APB1ENR |= RCC_APB1ENR_DACEN;
 
     // Initialize LED pins
     GPIO_InitTypeDef initStr = {GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_6 | GPIO_PIN_7,
@@ -98,7 +100,7 @@ int main(void) {
     HAL_GPIO_Init(GPIOC, &initStr);  // Initialize LED pins
     /**
      * Part 1: Measuring a Potentiometer With the ADC.
-    */
+     */
     GPIOC->MODER |= GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0;     // Analog mode
     GPIOC->PUPDR &= ~(GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0);  // no pull-up/down resistor
     // set to 8-bit resolution
@@ -132,7 +134,21 @@ int main(void) {
     int thres2 = 128;
     int thres3 = 255;
 
+    /**
+     * Part 2: Generating Waveforms with the DAC.
+     */
+    GPIOA->MODER |= GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0;     // Analog mode
+    GPIOA->PUPDR &= ~(GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0);  // no pull-up/down resistor
+
+    // Set Software Trigger Mode
+    DAC->CR |= (DAC_CR_TSEL1_2 | DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0);
+    DAC1->CR |= DAC_CR_TEN1; // Enable Trigger Mode
+    DAC1->CR |= DAC_CR_EN1; // Enable DAC
+
     while (1) {
+        /**
+         * Part 1 Checkoff
+         */
         ADC1->CR = ADC_CR_ADSTART;
         while (!(ADC1->ISR & ADC_ISR_EOC))
             ;
@@ -161,6 +177,18 @@ int main(void) {
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_SET);
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET);
             HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
+        }
+
+        /**
+         * Part 2 Checkoff
+         */
+        for (int i = 0; i < 32; i++) {
+            DAC1->DHR8R1 = sine_table[i];
+            DAC1->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
+            // DAC1->DHR8R1 = triangle_table[i];
+            // DAC1->DHR8R1 = sawtooth_table[i];
+            // DAC1->DHR8R1 = square_table[i];
+            HAL_Delay(1);
         }
     }
 }
