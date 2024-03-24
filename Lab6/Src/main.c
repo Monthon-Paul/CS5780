@@ -184,10 +184,10 @@ int main(void) {
          */
         for (int i = 0; i < 32; i++) {
             DAC1->DHR8R1 = sine_table[i];
-            DAC1->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
             // DAC1->DHR8R1 = triangle_table[i];
             // DAC1->DHR8R1 = sawtooth_table[i];
             // DAC1->DHR8R1 = square_table[i];
+            DAC1->SWTRIGR = DAC_SWTRIGR_SWTRIG1;
             HAL_Delay(1);
         }
     }
