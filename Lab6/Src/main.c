@@ -137,11 +137,11 @@ int main(void) {
     /**
      * Part 2: Generating Waveforms with the DAC.
      */
-    GPIOA->MODER |= GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0;     // Analog mode
-    GPIOA->PUPDR &= ~(GPIO_MODER_MODER0_1 | GPIO_MODER_MODER0_0);  // no pull-up/down resistor
+    GPIOA->MODER |= GPIO_MODER_MODER4_1 | GPIO_MODER_MODER4_0;     // Analog mode
+    GPIOA->PUPDR &= ~(GPIO_MODER_MODER4_1 | GPIO_MODER_MODER4_0);  // no pull-up/down resistor
 
     // Set Software Trigger Mode
-    DAC->CR |= (DAC_CR_TSEL1_2 | DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0);
+    DAC1->CR |= (DAC_CR_TSEL1_2 | DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0);
     DAC1->CR |= DAC_CR_TEN1; // Enable Trigger Mode
     DAC1->CR |= DAC_CR_EN1; // Enable DAC
 
